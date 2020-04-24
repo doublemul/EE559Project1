@@ -36,7 +36,7 @@ class MultilayerPerceptron(nn.Module):
         if not args.use_weight_sharing:
             self.fc2 = nn.Linear(args.hidden_unit, 2)
         else:
-            self.fc2 = nn.Linear(args.hidden_unit*2, 2)
+            self.fc2 = nn.Linear(args.hidden_unit * 2, 2)
 
         if args.use_auxiliary_losses:
             self.auxiliary1 = nn.Linear(args.hidden_unit, args.hidden_unit)
@@ -103,9 +103,9 @@ class ConvolutionalNeuralNetwork(nn.Module):
             y = F.relu(F.max_pool2d(self.conv2(y), kernel_size=2, stride=2))
         else:
             x0, x1 = x[:, 0, :, :].unsqueeze(1), x[:, 1, :, :].unsqueeze(1)
-            y0, y1 = F.relu(F.max_pool2d(self.conv1(x0), kernel_size=2, stride=2)),\
+            y0, y1 = F.relu(F.max_pool2d(self.conv1(x0), kernel_size=2, stride=2)), \
                      F.relu(F.max_pool2d(self.conv1(x1), kernel_size=2, stride=2))
-            y0, y1 = F.relu(F.max_pool2d(self.conv2(y0), kernel_size=2, stride=2)),\
+            y0, y1 = F.relu(F.max_pool2d(self.conv2(y0), kernel_size=2, stride=2)), \
                      F.relu(F.max_pool2d(self.conv2(y1), kernel_size=2, stride=2))
             y = torch.cat((y0, y1), 1)
             if self.args.use_auxiliary_losses:
@@ -125,3 +125,97 @@ class ConvolutionalNeuralNetwork(nn.Module):
             return y
         else:
             return y, y0, y1
+
+
+class ResNet(nn.Module):
+
+    def __init__(self, args):
+        super(ResNet, self).__init__()
+        self.args = args
+
+        if not args.use_weight_sharing:
+            self.channel_num = args.channel_num
+            self.conv = nn.Conv2d(2, self.channel_num, kernel_size=args.kernel_size)
+        else:
+            self.channel_num = int(args.channel_num/2)
+            self.conv = nn.Conv2d(1, self.channel_num, kernel_size=args.kernel_size)
+        self.bn = nn.BatchNorm2d(self.channel_num)
+
+        self.resnet_blocks = nn.Sequential(
+            *(ResNetBlock(self.channel_num, args.kernel_size, args.skip_connections, args.batch_normalization)
+              for _ in range(args.block_num))
+        )
+
+        self.fc1 = nn.Linear(512, args.hidden_unit)
+        self.fc2 = nn.Linear(args.hidden_unit, 2)
+
+        if args.use_dropout:
+            self.dropout = nn.Dropout(args.dropout_rate)
+
+        if args.use_auxiliary_losses:
+            self.auxiliary1 = nn.Linear(256, args.hidden_unit)
+            self.auxiliary2 = nn.Linear(args.hidden_unit, 10)
+
+    def forward(self, x):
+
+        if not self.args.use_weight_sharing:
+            y = F.relu(self.bn(self.conv(x)))
+            y = self.resnet_blocks(y)
+            y = F.avg_pool2d(y, kernel_size=3, stride=3)
+        else:
+            x0, x1 = x[:, 0, :, :].unsqueeze(1), x[:, 1, :, :].unsqueeze(1)
+            y0, y1 = F.relu(self.bn(self.conv(x0))),  F.relu(self.bn(self.conv(x1)))
+            y0, y1 = self.resnet_blocks(y0), self.resnet_blocks(y1)
+            y0, y1 = F.avg_pool2d(y0, kernel_size=3, stride=3), F.avg_pool2d(y1, kernel_size=3, stride=3)
+            y = torch.cat((y0, y1), 1)
+            if self.args.use_auxiliary_losses:
+                y0, y1 = y0.view(y0.size(0), -1), y1.view(y1.size(0), -1)
+                y0, y1 = F.relu(self.auxiliary1(y0)), F.relu(self.auxiliary1(y1))
+                if self.args.use_dropout:
+                    y0, y1 = self.dropout(y0), self.dropout(y1)
+                y0, y1 = self.auxiliary2(y0), self.auxiliary2(y1)
+
+        y = y.view(y.size(0), -1)
+        y = F.relu(self.fc1(y))
+        if self.args.use_dropout:
+            y = self.dropout(y)
+        y = self.fc2(y)
+
+        if not self.args.use_auxiliary_losses:
+            return y
+        else:
+            return y, y0, y1
+
+
+class ResNetBlock(nn.Module):
+    def __init__(self, nb_channels, kernel_size, skip_connections=True, batch_normalization=True):
+        super(ResNetBlock, self).__init__()
+
+        self.conv1 = nn.Conv2d(nb_channels, nb_channels,
+                               kernel_size=kernel_size,
+                               padding=(kernel_size - 1) // 2)
+
+        self.bn1 = nn.BatchNorm2d(nb_channels)
+
+        self.conv2 = nn.Conv2d(nb_channels, nb_channels,
+                               kernel_size=kernel_size,
+                               padding=(kernel_size - 1) // 2)
+
+        self.bn2 = nn.BatchNorm2d(nb_channels)
+
+        self.skip_connections = skip_connections
+        self.batch_normalization = batch_normalization
+
+    def forward(self, x):
+        y = self.conv1(x)
+        if self.batch_normalization:
+            y = self.bn1(y)
+        y = F.relu(y)
+        y = self.conv2(y)
+        if self.batch_normalization:
+            y = self.bn2(y)
+        if self.skip_connections:
+            y = y + x
+        y = F.relu(y)
+
+        return y

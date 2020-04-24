@@ -75,19 +75,24 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default=MultilayerPerceptron)
+    parser.add_argument('--model', default=ResNet)
     parser.add_argument('--lr', default=1e-3, type=float)
     parser.add_argument('--hidden_unit', default=64, type=int)
     parser.add_argument('--block_num', default=3, type=int)
 
-    parser.add_argument('--use_weight_sharing', default=True, type=str2bool)
-    parser.add_argument('--use_auxiliary_losses', default=True, type=str2bool)
-    parser.add_argument('--auxiliary_losses_rate', default=1e-3, type=float)
-
     parser.add_argument('--use_dropout', default=False, type=str2bool)
     parser.add_argument('--dropout_rate', default=0.5, type=float)
 
-    parser.add_argument('--rounds_num', default=20, type=int)
+    parser.add_argument('--use_weight_sharing', default=True, type=str2bool)
+    parser.add_argument('--use_auxiliary_losses', default=False, type=str2bool)
+    parser.add_argument('--auxiliary_losses_rate', default=1e-3, type=float)
+
+    parser.add_argument('--channel_num', default=32, type=int)
+    parser.add_argument('--kernel_size', default=3, type=int)
+    parser.add_argument('--skip_connections', default=True, type=str2bool)
+    parser.add_argument('--batch_normalization', default=True, type=str2bool)
+
+    parser.add_argument('--rounds_num', default=3, type=int)
     parser.add_argument('--data_size', default=1000, type=int)
     parser.add_argument('--num_epochs', default=25, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
