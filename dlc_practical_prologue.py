@@ -33,7 +33,8 @@ parser.add_argument('--data_dir',
 parser.add_argument('-f', '--file',
                     help = 'quick hack for jupyter')
 
-args = parser.parse_args()
+# args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 if args.seed >= 0:
     torch.manual_seed(args.seed)

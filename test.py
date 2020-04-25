@@ -10,8 +10,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 import numpy as np
-import dlc_practical_prologue as prologue
 from models import *
+import sys
+import dlc_practical_prologue as prologue
 
 
 def str2bool(v):
@@ -23,6 +24,17 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def str2class(v):
+    if v == 'MultilayerPerceptron':
+        return MultilayerPerceptron
+    elif v == 'ConvolutionalNeuralNetwork':
+        return ConvolutionalNeuralNetwork
+    elif v == 'ResNet':
+        return ResNet
+    else:
+        raise argparse.ArgumentTypeError('Wrong class name.')
 
 
 def train_model(model, data_input, data_target, data_classes, args, device, logs):
@@ -52,7 +64,7 @@ def train_model(model, data_input, data_target, data_classes, args, device, logs
             info = 'Train epoch %d: train loss: %.4f, train error rate: %.2f%%.' \
                    % (epoch, train_loss, 100 * error_rate)
             print(info)
-            logs.write('\n%s' % info)
+            logs.write('%s\n' % info)
 
 
 def compute_error_rate(model, data_input, data_target, args, display=False, logs=None):
@@ -67,23 +79,23 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
         error_num += batch_error_num
     if display:
         info = 'Test error rate: %.2f%%.' % (100 * error_num / data_input.size(0))
-        logs.write('\n%s' % info)
+        logs.write('%s\n' % info)
         print(info)
     return error_num / data_input.size(0)
 
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default=ResNet)
-    parser.add_argument('--lr', default=1e-3, type=float)
+    parser = argparse.ArgumentParser(prog=sys.argv[0])
+    parser.add_argument('--model', default='MultilayerPerceptron', type=str2class)
     parser.add_argument('--hidden_unit', default=64, type=int)
     parser.add_argument('--block_num', default=3, type=int)
+    parser.add_argument('--lr', default=1e-3, type=float)
 
     parser.add_argument('--use_dropout', default=False, type=str2bool)
     parser.add_argument('--dropout_rate', default=0.5, type=float)
 
-    parser.add_argument('--use_weight_sharing', default=True, type=str2bool)
+    parser.add_argument('--use_weight_sharing', default=False, type=str2bool)
     parser.add_argument('--use_auxiliary_losses', default=False, type=str2bool)
     parser.add_argument('--auxiliary_losses_rate', default=1e-3, type=float)
 
@@ -92,32 +104,33 @@ if __name__ == '__main__':
     parser.add_argument('--skip_connections', default=True, type=str2bool)
     parser.add_argument('--batch_normalization', default=True, type=str2bool)
 
-    parser.add_argument('--rounds_num', default=3, type=int)
+    parser.add_argument('--rounds_num', default=20, type=int)
     parser.add_argument('--data_size', default=1000, type=int)
     parser.add_argument('--num_epochs', default=25, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--SEED', default=666, type=int)
+    parser.add_argument('--SEED', default=555, type=int)
 
-    parser.add_argument('--display_train', default=True, type=str2bool)
+    parser.add_argument('--display_train', default=False, type=str2bool)
     parser.add_argument('--display_frequency', default=5, type=int)
-    parser.add_argument('--display_test', default=True, type=str2bool)
+    parser.add_argument('--display_test', default=False, type=str2bool)
 
     args = parser.parse_args()
+    # args, unknown = parser.parse_known_args()
 
-    # For reproducibility
+    # For reproducibility #
     np.random.seed(args.SEED)
     torch.manual_seed(args.SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.SEED)
         torch.backends.cudnn.deterministic = True
 
-    # Set device
+    # Set device #
     if torch.cuda.is_available():
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
 
-    # Prepare data
+    # Prepare data #
     # load data
     train_input, train_target, train_classes, test_input, test_target, test_classes = \
         prologue.generate_pair_sets(args.data_size)
@@ -129,11 +142,22 @@ if __name__ == '__main__':
     train_input = train_input.sub_(mean).div_(std)
     test_input = test_input.sub_(mean).div_(std)
 
-    # Record results
+    # Record settings #
     logs = open('logs.txt', mode='a')
-    logs.write(' '.join([str(k) + ',' + str(v) for k, v in sorted(vars(args).items(), key=lambda x: x[0])]))
+    logs.write('Architecture: %s\n' % args.model.__name__)
+    logs.write('Use dropout, rate=%.2e ' % args.dropout_rate) if args.use_dropout else logs.write('Not use dropout; ')
+    logs.write('Use weight sharing; ') if args.use_weight_sharing else logs.write('Not use weight sharing; ')
+    logs.write('Use use auxiliary losses, rate: %.2e.\n' % args.auxiliary_losses_rate) if args.use_auxiliary_losses \
+        else logs.write('Not use auxiliary losses.\n')
+    logs.write('Number of hidden unit: %d, number of blocks: %d, learning rate: %.2e.\n'
+               % (args.hidden_unit, args.block_num, args.lr))
+    if args.model == ResNet:
+        logs.write('Use skip connections; ') if args.skip_connections else logs.write('Not use skip connections; ')
+        logs.write('Use batch normalization; ') if args.batch_normalization \
+            else logs.write('Not use batch normalization; ')
+        logs.write('Number of channels: %d; kernel_size: %d.\n' % (args.channel_num, args.kernel_size))
 
-    # Train model
+    # Train model #
     error_rates = []
     for _ in range(args.rounds_num):
         model = args.model(args)
@@ -141,10 +165,11 @@ if __name__ == '__main__':
         error_rate = compute_error_rate(model, test_input, test_target, args, args.display_test, logs)
         error_rates.append(error_rate)
 
-    info = 'Average test error rate is %.2f%%, and standard deviation is %.4f.' \
+    # Record results #
+    info = 'Average test error rate is %.2f%%, and standard deviation is %.4e.' \
            % (100*(np.array(error_rates).mean()), np.array(error_rates).std())
     print(info)
-    logs.write('\n%s\nDone.\n\n' % info)
+    logs.write('%s\n\n' % info)
 
     print('Done.')
 
