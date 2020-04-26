@@ -1,0 +1,114 @@
+Architecture: MultilayerPerceptron
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 20.80%, standard deviation: 2.2685e-02.
+Average train time: 1.03s. Number of parameters: 37762.
+
+Architecture: MultilayerPerceptron
+Not use dropout; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 17.37%, standard deviation: 7.5040e-03.
+Average train time: 2.02s. Number of parameters: 25346.
+
+Architecture: MultilayerPerceptron
+Not use dropout; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 17.10%, standard deviation: 8.2946e-03.
+Average train time: 2.63s. Number of parameters: 30156.
+
+Architecture: MultilayerPerceptron
+Use dropout, rate=5.00e-01; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 22.95%, standard deviation: 1.0042e-02.
+Average train time: 1.85s. Number of parameters: 37762.
+
+Architecture: MultilayerPerceptron
+Use dropout, rate=5.00e-01; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 21.04%, standard deviation: 9.8309e-03.
+Average train time: 2.65s. Number of parameters: 25346.
+
+Architecture: MultilayerPerceptron
+Use dropout, rate=5.00e-01; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 20.80%, standard deviation: 8.6283e-03.
+Average train time: 3.52s. Number of parameters: 30156.
+
+Architecture: ConvolutionalNeuralNetwork
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 19.84%, standard deviation: 1.8855e-02.
+Average train time: 7.59s. Number of parameters: 26162.
+
+Architecture: ConvolutionalNeuralNetwork
+Not use dropout; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 16.60%, standard deviation: 1.1272e-02.
+Average train time: 9.73s. Number of parameters: 18994.
+
+Architecture: ConvolutionalNeuralNetwork
+Not use dropout; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 16.68%, standard deviation: 8.2757e-03.
+Average train time: 9.93s. Number of parameters: 27900.
+
+Architecture: ConvolutionalNeuralNetwork
+Use dropout, rate=5.00e-01; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 19.24%, standard deviation: 1.3720e-02.
+Average train time: 7.19s. Number of parameters: 26162.
+
+Architecture: ConvolutionalNeuralNetwork
+Use dropout, rate=5.00e-01; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 16.72%, standard deviation: 8.3940e-03.
+Average train time: 9.17s. Number of parameters: 18994.
+
+Architecture: ConvolutionalNeuralNetwork
+Use dropout, rate=5.00e-01; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 16.84%, standard deviation: 1.0293e-02.
+Average train time: 11.87s. Number of parameters: 27900.
+
+Architecture: ResNet
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 16.93%, standard deviation: 1.5783e-02.
+Average train time: 166.83s. Number of parameters: 89506.
+
+Architecture: ResNet
+Not use dropout; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 14.91%, standard deviation: 9.4577e-03.
+Average train time: 155.89s. Number of parameters: 47266.
+
+Architecture: ResNet
+Not use dropout; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 15.18%, standard deviation: 7.2153e-03.
+Average train time: 152.41s. Number of parameters: 64364.
+
+Architecture: ResNet
+Use dropout, rate=5.00e-01; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 18.27%, standard deviation: 1.4785e-02.
+Average train time: 174.52s. Number of parameters: 89506.
+
+Architecture: ResNet
+Use dropout, rate=5.00e-01; Use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 15.98%, standard deviation: 9.3145e-03.
+Average train time: 170.71s. Number of parameters: 47266.
+
+Architecture: ResNet
+Use dropout, rate=5.00e-01; Use weight sharing; Use use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Average test error rate: 15.60%, standard deviation: 1.2137e-02.
+Average train time: 164.24s. Number of parameters: 64364.
+
