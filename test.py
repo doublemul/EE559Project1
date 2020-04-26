@@ -41,7 +41,7 @@ def record_settings(args, logs):
     logs.write('Architecture: %s\n' % args.model.__name__)
     logs.write('Use dropout, rate=%.2e; ' % args.dropout_rate) if args.use_dropout else logs.write('Not use dropout; ')
     logs.write('Use weight sharing; ') if args.use_weight_sharing else logs.write('Not use weight sharing; ')
-    logs.write('Use use auxiliary losses, rate: %.2e.\n' % args.auxiliary_losses_rate) if args.use_auxiliary_losses \
+    logs.write('Use auxiliary losses, rate: %.2e.\n' % args.auxiliary_losses_rate) if args.use_auxiliary_losses \
         else logs.write('Not use auxiliary losses.\n')
     logs.write('Number of hidden unit: %d, number of blocks: %d, learning rate: %.2e.\n'
                % (args.hidden_unit, args.block_num, args.lr))
