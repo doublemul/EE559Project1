@@ -6,12 +6,12 @@
 # @Description  :
 
 import argparse
+import time
 import torch
 from torch import nn
 from torch.nn import functional as F
 import numpy as np
 from models import *
-import sys
 import dlc_practical_prologue as prologue
 
 
@@ -35,6 +35,21 @@ def str2class(v):
         return ResNet
     else:
         raise argparse.ArgumentTypeError('Wrong class name.')
+
+
+def record_settings(args, logs):
+    logs.write('Architecture: %s\n' % args.model.__name__)
+    logs.write('Use dropout, rate=%.2e; ' % args.dropout_rate) if args.use_dropout else logs.write('Not use dropout; ')
+    logs.write('Use weight sharing; ') if args.use_weight_sharing else logs.write('Not use weight sharing; ')
+    logs.write('Use use auxiliary losses, rate: %.2e.\n' % args.auxiliary_losses_rate) if args.use_auxiliary_losses \
+        else logs.write('Not use auxiliary losses.\n')
+    logs.write('Number of hidden unit: %d, number of blocks: %d, learning rate: %.2e.\n'
+               % (args.hidden_unit, args.block_num, args.lr))
+    if args.model == ResNet:
+        logs.write('Use skip connections; ') if args.skip_connections else logs.write('Not use skip connections; ')
+        logs.write('Use batch normalization; ') if args.batch_normalization \
+            else logs.write('Not use batch normalization; ')
+        logs.write('Number of channels: %d; kernel_size: %d.\n' % (args.channel_num, args.kernel_size))
 
 
 def train_model(model, data_input, data_target, data_classes, args, device, logs):
@@ -61,10 +76,15 @@ def train_model(model, data_input, data_target, data_classes, args, device, logs
 
         if args.display_train and epoch % args.display_frequency == 0:
             error_rate = compute_error_rate(model, data_input, data_target, args, False)
-            info = 'Train epoch %d: train loss: %.4f, train error rate: %.2f%%.' \
-                   % (epoch, train_loss, 100 * error_rate)
+            info = 'Train epoch %d: train loss: %.4f, train error rate: %.2f%%.' % (epoch, train_loss, 100 * error_rate)
             print(info)
             logs.write('%s\n' % info)
+
+        # shuffled_indices = np.arange(len(data_input))
+        # np.random.shuffle(shuffled_indices)
+        # data_input = data_input[shuffled_indices]
+        # data_target = data_target[shuffled_indices]
+        # data_classes = data_classes[shuffled_indices]
 
 
 def compute_error_rate(model, data_input, data_target, args, display=False, logs=None):
@@ -75,8 +95,7 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
         else:
             output = model(batch_input)
         pred = output.argmax(-1)
-        batch_error_num = torch.Tensor([1 if p != t else 0 for p, t in zip(pred, batch_target)]).sum().item()
-        error_num += batch_error_num
+        error_num += torch.Tensor([1 if p != t else 0 for p, t in zip(pred, batch_target)]).sum().item()
     if display:
         info = 'Test error rate: %.2f%%.' % (100 * error_num / data_input.size(0))
         logs.write('%s\n' % info)
@@ -86,7 +105,7 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(prog=sys.argv[0])
+    parser = argparse.ArgumentParser()
     parser.add_argument('--model', default='MultilayerPerceptron', type=str2class)
     parser.add_argument('--hidden_unit', default=64, type=int)
     parser.add_argument('--block_num', default=3, type=int)
@@ -108,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_size', default=1000, type=int)
     parser.add_argument('--num_epochs', default=25, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--SEED', default=555, type=int)
+    parser.add_argument('--SEED', default=666, type=int)
 
     parser.add_argument('--display_train', default=False, type=str2bool)
     parser.add_argument('--display_frequency', default=5, type=int)
@@ -144,30 +163,29 @@ if __name__ == '__main__':
 
     # Record settings #
     logs = open('logs.txt', mode='a')
-    logs.write('Architecture: %s\n' % args.model.__name__)
-    logs.write('Use dropout, rate=%.2e ' % args.dropout_rate) if args.use_dropout else logs.write('Not use dropout; ')
-    logs.write('Use weight sharing; ') if args.use_weight_sharing else logs.write('Not use weight sharing; ')
-    logs.write('Use use auxiliary losses, rate: %.2e.\n' % args.auxiliary_losses_rate) if args.use_auxiliary_losses \
-        else logs.write('Not use auxiliary losses.\n')
-    logs.write('Number of hidden unit: %d, number of blocks: %d, learning rate: %.2e.\n'
-               % (args.hidden_unit, args.block_num, args.lr))
-    if args.model == ResNet:
-        logs.write('Use skip connections; ') if args.skip_connections else logs.write('Not use skip connections; ')
-        logs.write('Use batch normalization; ') if args.batch_normalization \
-            else logs.write('Not use batch normalization; ')
-        logs.write('Number of channels: %d; kernel_size: %d.\n' % (args.channel_num, args.kernel_size))
+    record_settings(args, logs)
 
     # Train model #
     error_rates = []
+    train_times = []
     for _ in range(args.rounds_num):
         model = args.model(args)
+        start = time.time()
         train_model(model, train_input, train_target, train_classes, args, device, logs)
+        train_time = time.time() - start
         error_rate = compute_error_rate(model, test_input, test_target, args, args.display_test, logs)
         error_rates.append(error_rate)
+        train_times.append(train_time)
+
+    # Find parameter number #
+    param_num = 0
+    for p in model.parameters():
+        param_num += p.nelement()
 
     # Record results #
-    info = 'Average test error rate is %.2f%%, and standard deviation is %.4e.' \
-           % (100*(np.array(error_rates).mean()), np.array(error_rates).std())
+    info = 'Average test error rate: %.2f%%, standard deviation: %.4e.\n' \
+           'Average train time: %.2fs. Number of parameters: %d.' \
+           % (100*(np.array(error_rates).mean()), np.array(error_rates).std(), np.array(train_times).mean(), param_num)
     print(info)
     logs.write('%s\n\n' % info)
 
