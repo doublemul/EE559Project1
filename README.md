@@ -1,1 +1,1 @@
-# DeepLearningProject1
+# Deep Learning miniProject 1
