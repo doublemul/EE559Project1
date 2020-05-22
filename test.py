@@ -36,6 +36,11 @@ def shuffle_func(train_input, train_target, train_classes, test_input, test_targ
 
 
 def str2bool(v):
+    """
+    Convert string to boolean
+    :param v: string
+    :return: boolean
+    """
     if isinstance(v, bool):
         return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -46,7 +51,12 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def str2class(v):
+def str2model(v):
+    """
+    Convert string type model name to model class defined in models.py
+    :param v: string
+    :return: class in models.py
+    """
     if v == 'MultilayerPerceptron':
         return MultilayerPerceptron
     elif v == 'ConvolutionalNeuralNetwork':
@@ -58,6 +68,11 @@ def str2class(v):
 
 
 def record_settings(args, logs):
+    """
+    Record experiment setup and hyper-parameters
+    :param args: arguments saves parameters
+    :param logs: log file to record parameters
+    """
     logs.write('Architecture: %s\n' % args.model.__name__)
     logs.write('Use dropout, rate=%.2e; ' % args.dropout_rate) if args.use_dropout else logs.write('Not use dropout; ')
     logs.write('Use weight sharing; ') if args.use_weight_sharing else logs.write('Not use weight sharing; ')
@@ -73,15 +88,29 @@ def record_settings(args, logs):
 
 
 def train_model(model, data_input, data_target, data_classes, args, device, logs):
+    """
+    Train the model
+    :param model: model
+    :param data_input: train data input
+    :param data_target: train data target
+    :param data_classes: train data classes
+    :param args: arguments for hyper-parameter
+    :param device: device cpu or cuda
+    :param logs: log file to record results
+    :return: trained model
+    """
+    # define optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss().to(device)
 
+    # train for different loop
     for epoch in range(1, args.num_epochs + 1):
         train_loss = 0
         for batch_input, batch_target, batch_classes in zip(data_input.split(args.batch_size),
                                                             data_target.split(args.batch_size),
                                                             data_classes.split(args.batch_size)):
             output = model(batch_input)
+            # if use auxiliary loss, add auxiliary loss
             if args.use_auxiliary_losses:
                 output, dig1, dig2 = output
                 original_loss = criterion(output, batch_target)
@@ -89,6 +118,7 @@ def train_model(model, data_input, data_target, data_classes, args, device, logs
                 loss = original_loss + args.auxiliary_losses_rate * auxiliary_loss
             else:
                 loss = criterion(output, batch_target)
+            # update parameter
             train_loss += loss.item()
             optimizer.zero_grad()
             loss.backward()
@@ -100,11 +130,11 @@ def train_model(model, data_input, data_target, data_classes, args, device, logs
             print(info)
             logs.write('%s\n' % info)
 
-        # shuffled_indices = np.arange(len(data_input))
-        # np.random.shuffle(shuffled_indices)
-        # data_input = data_input[shuffled_indices]
-        # data_target = data_target[shuffled_indices]
-        # data_classes = data_classes[shuffled_indices]
+        shuffled_indices = np.arange(len(data_input))
+        np.random.shuffle(shuffled_indices)
+        data_input = data_input[shuffled_indices]
+        data_target = data_target[shuffled_indices]
+        data_classes = data_classes[shuffled_indices]
 
 
 def compute_error_rate(model, data_input, data_target, args, display=False, logs=None):
@@ -126,7 +156,7 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='MultilayerPerceptron', type=str2class)
+    parser.add_argument('--model', default='MultilayerPerceptron', type=str2model)
     parser.add_argument('--hidden_unit', default=64, type=int)
     parser.add_argument('--block_num', default=3, type=int)
     parser.add_argument('--lr', default=1e-3, type=float)
@@ -154,7 +184,6 @@ if __name__ == '__main__':
     parser.add_argument('--display_test', default=False, type=str2bool)
 
     args = parser.parse_args()
-    # args, unknown = parser.parse_known_args()
 
     # For reproducibility #
     np.random.seed(args.SEED)
@@ -177,7 +206,6 @@ if __name__ == '__main__':
     # load data
     train_input, train_target, train_classes, test_input, test_target, test_classes = \
         prologue.generate_pair_sets(args.data_size)
-
     # move to device
     train_input, train_target, train_classes = train_input.to(device), train_target.to(device), train_classes.to(
         device)
@@ -187,12 +215,15 @@ if __name__ == '__main__':
     train_input = train_input.sub_(mean).div_(std)
     test_input = test_input.sub_(mean).div_(std)
 
-    # Train model #
     error_rates = []
     train_times = []
     for _ in range(args.rounds_num):
-        train_input, train_target, train_classes, test_input, test_target, test_classes = shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed = _)
 
+
+        train_input, train_target, train_classes, test_input, test_target, test_classes = \
+            shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed=_)
+
+        # Train model #
         model = args.model(args)
         if torch.cuda.is_available():
             model.cuda()
@@ -211,9 +242,11 @@ if __name__ == '__main__':
     # Record results #
     info = 'Average test error rate: %.2f%%, standard deviation: %.4e.\n' \
            'Average train time: %.2fs. Number of parameters: %d.' \
-           % (100*(np.array(error_rates).mean()), np.array(error_rates).std(), np.array(train_times).mean(), param_num)
+           % (100 * (np.array(error_rates).mean()),
+              np.array(error_rates).std(),
+              np.array(train_times).mean(),
+              param_num)
     print(info)
     logs.write('%s\n\n' % info)
 
     print('Done.')
-

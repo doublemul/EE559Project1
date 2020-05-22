@@ -112,3 +112,29 @@ Use skip connections; Use batch normalization; Number of channels: 32; kernel_si
 Average test error rate: 15.60%, standard deviation: 1.2137e-02.
 Average train time: 164.24s. Number of parameters: 64364.
 
+Architecture: ResNet
+Use dropout, rate=5.00e-01; Use weight sharing; Use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Architecture: ResNet
+Use dropout, rate=5.00e-01; Use weight sharing; Use auxiliary losses, rate: 1.00e-03.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Use skip connections; Use batch normalization; Number of channels: 32; kernel_size: 3.
+Architecture: MultilayerPerceptron
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 20.79%, standard deviation: 1.5269e-02.
+Average train time: 1.47s. Number of parameters: 37762.
+
+Architecture: MultilayerPerceptron
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 20.57%, standard deviation: 5.7280e-03.
+Average train time: 1.40s. Number of parameters: 37762.
+
+Architecture: MultilayerPerceptron
+Not use dropout; Not use weight sharing; Not use auxiliary losses.
+Number of hidden unit: 64, number of blocks: 3, learning rate: 1.00e-03.
+Average test error rate: 20.57%, standard deviation: 5.7280e-03.
+Average train time: 1.48s. Number of parameters: 37762.
+
