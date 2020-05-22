@@ -12,7 +12,7 @@ from torch.nn import functional as F
 
 class MultilayerPerceptron(nn.Module):
     """
-    Build a MLP model
+    Build a MLP model.
     """
     def __init__(self, args):
         super(MultilayerPerceptron, self).__init__()
@@ -20,7 +20,7 @@ class MultilayerPerceptron(nn.Module):
 
         if not args.use_weight_sharing:
         """
-        Whether weight sharing is used
+        Whether weight sharing is used.
         """
             self.fc1 = nn.Linear(392, args.hidden_unit)
         else:
