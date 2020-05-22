@@ -15,6 +15,26 @@ from models import *
 import dlc_practical_prologue as prologue
 
 
+def shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed):
+    size_tr = train_input.size(0)
+    arr_tr = np.arange(size_tr)
+    np.random.seed(seed)
+    np.random.shuffle(arr_tr)
+    train_input = train_input[arr_tr]
+    train_target = train_target[arr_tr]
+    train_classes = train_classes[arr_tr]
+
+    size_te = test_input.size(0)
+    arr_te = np.arange(size_te)
+    np.random.seed(seed)
+    np.random.shuffle(arr_te)
+    test_input = test_input[arr_te]
+    test_target = test_target[arr_te]
+    test_classes = test_classes[arr_te]
+
+    return train_input, train_target, train_classes, test_input, test_target, test_classes
+
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -116,7 +136,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--use_weight_sharing', default=False, type=str2bool)
     parser.add_argument('--use_auxiliary_losses', default=False, type=str2bool)
-    parser.add_argument('--auxiliary_losses_rate', default=1e-3, type=float)
+    parser.add_argument('--auxiliary_losses_rate', default=0.5, type=float)
 
     parser.add_argument('--channel_num', default=32, type=int)
     parser.add_argument('--kernel_size', default=3, type=int)
@@ -126,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument('--rounds_num', default=20, type=int)
     parser.add_argument('--data_size', default=1000, type=int)
     parser.add_argument('--num_epochs', default=25, type=int)
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--SEED', default=666, type=int)
 
     parser.add_argument('--display_train', default=False, type=str2bool)
@@ -149,27 +169,33 @@ if __name__ == '__main__':
     else:
         device = torch.device('cpu')
 
+    # Record settings #
+    logs = open('logs.txt', mode='a')
+    record_settings(args, logs)
+
     # Prepare data #
     # load data
     train_input, train_target, train_classes, test_input, test_target, test_classes = \
         prologue.generate_pair_sets(args.data_size)
+
     # move to device
-    train_input, train_target, train_classes = train_input.to(device), train_target.to(device), train_classes.to(device)
+    train_input, train_target, train_classes = train_input.to(device), train_target.to(device), train_classes.to(
+        device)
     test_input, test_target, test_classes = test_input.to(device), test_target.to(device), test_classes.to(device)
     # normalize input data
     mean, std = train_input.mean(), train_input.std()
     train_input = train_input.sub_(mean).div_(std)
     test_input = test_input.sub_(mean).div_(std)
 
-    # Record settings #
-    logs = open('logs.txt', mode='a')
-    record_settings(args, logs)
-
     # Train model #
     error_rates = []
     train_times = []
     for _ in range(args.rounds_num):
+        train_input, train_target, train_classes, test_input, test_target, test_classes = shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed = _)
+
         model = args.model(args)
+        if torch.cuda.is_available():
+            model.cuda()
         start = time.time()
         train_model(model, train_input, train_target, train_classes, args, device, logs)
         train_time = time.time() - start

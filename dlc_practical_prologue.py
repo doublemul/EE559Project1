@@ -135,12 +135,12 @@ def generate_pair_sets(nb):
             data_dir = './data'
 
     train_set = datasets.MNIST(data_dir + '/mnist/', train = True, download = True)
-    train_input = train_set.data.view(-1, 1, 28, 28).float()
-    train_target = train_set.targets
+    train_input = train_set.train_data.view(-1, 1, 28, 28).float()
+    train_target = train_set.train_labels
 
     test_set = datasets.MNIST(data_dir + '/mnist/', train = False, download = True)
-    test_input = test_set.data.view(-1, 1, 28, 28).float()
-    test_target = test_set.targets
+    test_input = test_set.test_data.view(-1, 1, 28, 28).float()
+    test_target = test_set.test_labels
 
     return mnist_to_pairs(nb, train_input, train_target) + \
            mnist_to_pairs(nb, test_input, test_target)
