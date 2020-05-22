@@ -11,17 +11,25 @@ from torch.nn import functional as F
 
 
 class MultilayerPerceptron(nn.Module):
-
+    """
+    Build a MLP model
+    """
     def __init__(self, args):
         super(MultilayerPerceptron, self).__init__()
         self.args = args
 
         if not args.use_weight_sharing:
+        """
+        Whether weight sharing is used
+        """
             self.fc1 = nn.Linear(392, args.hidden_unit)
         else:
             self.fc1 = nn.Linear(196, args.hidden_unit)
 
         if not args.use_dropout:
+        """
+        Whether dropput is used
+        """
             self.perceptron_blocks = nn.Sequential(
                 *(nn.Sequential(nn.Linear(args.hidden_unit, args.hidden_unit), nn.ReLU())
                   for _ in range(args.block_num))
@@ -39,6 +47,9 @@ class MultilayerPerceptron(nn.Module):
             self.fc2 = nn.Linear(args.hidden_unit * 2, 2)
 
         if args.use_auxiliary_losses:
+        """
+        Whether auxiliary loss is used
+        """
             self.auxiliary1 = nn.Linear(args.hidden_unit, args.hidden_unit)
             self.auxiliary2 = nn.Linear(args.hidden_unit, 10)
 
@@ -74,12 +85,17 @@ class MultilayerPerceptron(nn.Module):
 
 
 class ConvolutionalNeuralNetwork(nn.Module):
-
+    """
+    Build a CNN model
+    """
     def __init__(self, args):
         super(ConvolutionalNeuralNetwork, self).__init__()
         self.args = args
 
         if not args.use_weight_sharing:
+        """
+        Whether weight sharing is used
+        """
             self.conv1 = nn.Conv2d(2, 16, kernel_size=3)
             self.conv2 = nn.Conv2d(16, 64, kernel_size=3)
         else:
@@ -90,9 +106,15 @@ class ConvolutionalNeuralNetwork(nn.Module):
         self.fc2 = nn.Linear(args.hidden_unit, 2)
 
         if args.use_dropout:
+        """
+        Whether dropput is used
+        """
             self.dropout = nn.Dropout(args.dropout_rate)
 
         if args.use_auxiliary_losses:
+        """
+        Whether auxiliary loss is used
+        """
             self.auxiliary1 = nn.Linear(128, args.hidden_unit)
             self.auxiliary2 = nn.Linear(args.hidden_unit, 10)
 
@@ -128,12 +150,17 @@ class ConvolutionalNeuralNetwork(nn.Module):
 
 
 class ResNet(nn.Module):
-
+    """
+    Build a ResNet model
+    """
     def __init__(self, args):
         super(ResNet, self).__init__()
         self.args = args
 
         if not args.use_weight_sharing:
+        """
+        Whether weight sharing is used
+        """
             self.channel_num = args.channel_num
             self.conv = nn.Conv2d(2, self.channel_num, kernel_size=args.kernel_size)
         else:
@@ -149,10 +176,16 @@ class ResNet(nn.Module):
         self.fc1 = nn.Linear(512, args.hidden_unit)
         self.fc2 = nn.Linear(args.hidden_unit, 2)
 
-        if args.use_dropout:
+        if args.use_dropout
+        """
+        Whether dropput is used
+        """
             self.dropout = nn.Dropout(args.dropout_rate)
 
         if args.use_auxiliary_losses:
+        """
+        Whether auxiliary loss is used
+        """
             self.auxiliary1 = nn.Linear(256, args.hidden_unit)
             self.auxiliary2 = nn.Linear(args.hidden_unit, 10)
 
@@ -189,6 +222,9 @@ class ResNet(nn.Module):
 
 class ResNetBlock(nn.Module):
     def __init__(self, nb_channels, kernel_size, skip_connections=True, batch_normalization=True):
+    """
+    Construct a ResNet block
+    """
         super(ResNetBlock, self).__init__()
 
         self.conv1 = nn.Conv2d(nb_channels, nb_channels,
