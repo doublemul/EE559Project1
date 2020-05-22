@@ -16,6 +16,17 @@ import dlc_practical_prologue as prologue
 
 
 def shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed):
+    """
+    Shuffle the data
+    :param train_input: input data of train set
+    :param train_target: target data of train set
+    :param train_classes: classes data of train set
+    :param test_input: input data of test set
+    :param test_target: target data of test set
+    :param test_classes: classes data of test set
+    :param seed: Seed of random shuffle
+    :return: data after the data shuffle
+    """
     size_tr = train_input.size(0)
     arr_tr = np.arange(size_tr)
     np.random.seed(seed)
@@ -124,20 +135,25 @@ def train_model(model, data_input, data_target, data_classes, args, device, logs
             loss.backward()
             optimizer.step()
 
+        # print result
         if args.display_train and epoch % args.display_frequency == 0:
             error_rate = compute_error_rate(model, data_input, data_target, args, False)
             info = 'Train epoch %d: train loss: %.4f, train error rate: %.2f%%.' % (epoch, train_loss, 100 * error_rate)
             print(info)
             logs.write('%s\n' % info)
 
-        shuffled_indices = np.arange(len(data_input))
-        np.random.shuffle(shuffled_indices)
-        data_input = data_input[shuffled_indices]
-        data_target = data_target[shuffled_indices]
-        data_classes = data_classes[shuffled_indices]
-
 
 def compute_error_rate(model, data_input, data_target, args, display=False, logs=None):
+    """
+    compute the error rate
+    :param model: model
+    :param data_input: train data input
+    :param data_target: train data target
+    :param args: arguments for hyper-parameter
+    :param display: whether or not print the error rate of this model
+    :param logs: log file to record results
+    :return: error rate of this model
+    """
     error_num = 0
     for batch_input, batch_target in zip(data_input.split(args.batch_size), data_target.split(args.batch_size)):
         if args.use_auxiliary_losses:
@@ -155,8 +171,9 @@ def compute_error_rate(model, data_input, data_target, args, display=False, logs
 
 if __name__ == '__main__':
 
+    # set arguments for hyper-parameter
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', default='MultilayerPerceptron', type=str2model)
+    parser.add_argument('--model', default='ResNet', type=str2model)
     parser.add_argument('--hidden_unit', default=64, type=int)
     parser.add_argument('--block_num', default=3, type=int)
     parser.add_argument('--lr', default=1e-3, type=float)
@@ -164,8 +181,8 @@ if __name__ == '__main__':
     parser.add_argument('--use_dropout', default=False, type=str2bool)
     parser.add_argument('--dropout_rate', default=0.5, type=float)
 
-    parser.add_argument('--use_weight_sharing', default=False, type=str2bool)
-    parser.add_argument('--use_auxiliary_losses', default=False, type=str2bool)
+    parser.add_argument('--use_weight_sharing', default=True, type=str2bool)
+    parser.add_argument('--use_auxiliary_losses', default=True, type=str2bool)
     parser.add_argument('--auxiliary_losses_rate', default=0.5, type=float)
 
     parser.add_argument('--channel_num', default=32, type=int)
@@ -219,16 +236,18 @@ if __name__ == '__main__':
     train_times = []
     for _ in range(args.rounds_num):
 
-
+        # shuffle the data in every round
         train_input, train_target, train_classes, test_input, test_target, test_classes = \
             shuffle_func(train_input, train_target, train_classes, test_input, test_target, test_classes, seed=_)
 
-        # Train model #
+        # Train model
         model = args.model(args)
         if torch.cuda.is_available():
             model.cuda()
         start = time.time()
         train_model(model, train_input, train_target, train_classes, args, device, logs)
+
+        # Record training data
         train_time = time.time() - start
         error_rate = compute_error_rate(model, test_input, test_target, args, args.display_test, logs)
         error_rates.append(error_rate)
