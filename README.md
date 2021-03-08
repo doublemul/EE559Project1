@@ -14,7 +14,7 @@
 In this project, we compare the performance of different neural network structures, including **multilayer perceptron (MLP)**, **convolutional neural network (CNN)** and **residual network (ResNet)**, in the task of identifying which of the two handwritten digits is larger. The aim is to study the impact of auxiliary loss and weight sharing on the task of image classification. All our data comes from the MNIST database. Both the training set and the test set are composed of 1000 pairs of 14 × 14 grayscale images of handwritten digits (1000×2×14×14 tensors).
 
 ## Requirements
-Pytorch
+Pytorch 1.4
 
 ## Run
 From the root of the project: `python test.py`
