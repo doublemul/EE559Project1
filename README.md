@@ -7,7 +7,7 @@
 
 ## About
 - This is our implementaion for the mini-project 1 in the Deep leaning course at EPFL.
-  - **Team member**: Pengkang Guo, Xiaoyu Lin， Zhenyu Zhu
+  - **Team member**: Pengkang Guo, Xiaoyu Lin, Zhenyu Zhu
 - [[report](report.pdf)]
 
 ## Project Discription
